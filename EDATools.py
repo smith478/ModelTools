@@ -441,8 +441,8 @@ def null_value_cleanup(p_data, p_numeric_cat_index = np.array([]), p_na_imputati
                 p_data.insert(i+counter, column+'_ISNULL', new_column)
                 
                 counter += 1
-
-# TODO Add a Try/Except to handle predictors with a single unique value. Run an example and see which functions break    
+                
+                  
 def EDA(p_data,
         p_predictors,
         p_numeric_cat_index = np.array([]),
@@ -471,7 +471,7 @@ def EDA(p_data,
             WgtDistPlot(p_x=np.asarray(data_predictor.iloc[:,i]),p_varname=col[i],p_w=np.asarray(weight),p_bins=p_bins)
             WgtDescribe(data_predictor,i,weight)
         else:
-            fg,ax = plt.subplots(nrows=1,ncols=1,sharey=True,figsize=(12, 8))
+            fg,ax = plt.subplots(nrows=1,ncols=1,figsize=(12, 8))
             if p_weight is None:
                 data_count = p_data.groupby(by=[col[i]])[col[i]].count()
                 sns.countplot(x=col[i], data=data_predictor) 
@@ -501,7 +501,7 @@ def EDA(p_data,
                 WgtDistPlot(p_x=np.asarray(data_control.iloc[:,i]),p_varname=col[i],p_w=np.asarray(weight),p_bins=p_bins)
                 WgtDescribe(data_control,i,weight)
             else:
-                fg,ax = plt.subplots(nrows=1,ncols=1,sharey=True,figsize=(12, 8))
+                fg,ax = plt.subplots(nrows=1,ncols=1,figsize=(12, 8))
                 if p_weight is None:
                     data_count = p_data.groupby(by=[col[i]])[col[i]].count()
                     sns.countplot(x=col[i], data=data_control)
@@ -525,7 +525,7 @@ def EDA(p_data,
             WgtDistPlot(p_x=np.asarray(data_target),p_varname=data_target.name,p_w=np.asarray(weight),p_bins=p_bins)
             WgtDescribe(p_data,p_target,weight)
         else:
-            fg,ax = plt.subplots(nrows=1,ncols=1,sharey=True,figsize=(12, 8))
+            fg,ax = plt.subplots(nrows=1,ncols=1,figsize=(12, 8))
             if p_weight is None:
                 data_count = p_data.groupby(by=[data_target.name])[data_target.name].count()
                 sns.countplot(x=data_target.name, data=data_target)
@@ -592,7 +592,7 @@ def TargetDist(p_data,
     col = p_data.columns
     
     if p_target_categorical:
-        fg,ax = plt.subplots(nrows=1,ncols=1,sharey=True,figsize=(12, 8))
+        fg,ax = plt.subplots(nrows=1,ncols=1,figsize=(12, 8))
         if p_weight is None:
             data_count = p_data.groupby(by=[col[p_target]])[col[p_target]].count()
             sns.countplot(x=col[p_target], data=p_data)
@@ -632,6 +632,48 @@ def ContCatSplit(p_data, p_numeric_cat_index = np.array([])):
             cat.append(i)
     return cont, cat
 
+    
+def rare_level_check(p_data, 
+                     p_predictors,
+                     p_numeric_cat_index = np.array([]),
+                     p_weight = None, # only fill this in if you want a weighted check
+                     p_threshold = 0.005, # if a fraction check portion, if integer check count/weight
+                     p_verbose=False):
+    """ Check for variables with levels that have very little value or variables with a single level """
+    cat_cols = np.intersect1d(p_predictors,ContCatSplit(p_data, p_numeric_cat_index)[1])
+    
+    counter = 0
+    for i, column in enumerate(p_data.columns):
+        if i in cat_cols:
+            if p_verbose:
+                print('checking {}'.format(column))
+            
+            if p_threshold < 1.0:
+                if p_weight is None:
+                    data_count = p_data.groupby(by=[column])[column].count() / len(p_data)
+                    word = 'portion'
+                else:
+                    data_count = p_data.groupby(by=[column])[p_data.columns[p_weight]].sum() / p_data.iloc[:,p_weight].sum()
+                    word = 'weighted portion'
+            elif p_threshold > 1.0:
+                if p_weight is None:
+                    data_count = p_data.groupby(by=[column])[column].count()
+                    word = 'count'
+                else:
+                    data_count = p_data.groupby(by=[column])[p_data.columns[p_weight]].sum()
+                    word = 'weight'
+                    
+            if len(data_count) == 1:
+                print('{} contains a single level, it should be excluded or revisited'.format(column))
+                counter += 1
+            else:
+                for idx in data_count.index:
+                    if data_count[idx] < p_threshold:
+                        print('{} has thin data in level {}, the {} is {}.'.format(column, str(idx), word, data_count[idx]))
+                        counter += 1
+                        
+    if counter == 0:
+        print('There are no levels with thin data, using a threshold of {}'.format(p_threshold))
 
 def Correlations_Cont(p_data,
                       p_predictors,

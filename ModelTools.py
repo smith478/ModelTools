@@ -1037,7 +1037,7 @@ def ForBackRandomForestPremutations(p_features,
     # Since we're doing cross-validation here, make X_train a larger portion of th overall dataset (80-90%)
     
     best_pred_index = p_predictors
-    best_vars = p_features
+    best_vars = p_features[:]
     
     # Run a backward regression on all variables
     keep_going = True # To get things started
@@ -1186,7 +1186,7 @@ def ForBackRandomForestPremutations(p_features,
                     
                 keep_going = True # You're not done yet
                 
-                best_vars = best_vars.append([df_sorted['Variable'][0], df_sorted['Var_Index'][0]]) # include the best variable
+                best_vars.append([df_sorted['Variable'][0], df_sorted['Var_Index'][0]]) # include the best variable
                 best_pred_index = best_pred_index + df_sorted['Var_Index'][0]
                 
                 leftover_vars = [[name, index] for name, index in p_features if [name, index] not in best_vars]
@@ -1410,7 +1410,7 @@ def ForBackGradientBoostingPremutations(p_features,
                     
                 keep_going = True # You're not done yet
                 
-                best_vars = best_vars.append([df_sorted['Variable'][0], df_sorted['Var_Index'][0]]) # include the best variable
+                best_vars.append([df_sorted['Variable'][0], df_sorted['Var_Index'][0]]) # include the best variable
                 best_pred_index = best_pred_index + df_sorted['Var_Index'][0]
                 
                 leftover_vars = [[name, index] for name, index in p_features if [name, index] not in best_vars]

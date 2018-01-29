@@ -5,9 +5,7 @@ sys.path.append("..")  # Find a better way to do this.
 from Model import Model
 
 def sklearn_Model(model_label, module_name, model_name, p_metric, p_seed=0):
-    #Scoring parameter
-    import sys
-
+    # Scoring parameter
     if p_metric == 'L1':
         from sklearn.metrics import mean_absolute_error
         metric = mean_absolute_error
@@ -21,7 +19,7 @@ def sklearn_Model(model_label, module_name, model_name, p_metric, p_seed=0):
         from sklearn.metrics import auc
         from sklearn.metrics import roc_curve
         def my_auc(X, Y):
-            fpr, tpr, thresholds = roc_curve(Y, model_with_hyperparameters.predict(X))
+            fpr, tpr, thresholds = roc_curve(Y, self.predict(X))
             return auc(fpr, tpr)
         metric = my_auc
     elif p_metric == 'accuracy':
@@ -29,7 +27,6 @@ def sklearn_Model(model_label, module_name, model_name, p_metric, p_seed=0):
         metric = accuracy_score
     else:
         print('{} is not an available metric'.format(p_metric))
-        sys.exit
 
     my_label = model_label
 

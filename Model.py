@@ -29,4 +29,3 @@ class Model(object):
     def copy(self):
         # TODO Change the label name.
         to_return = Model(self.heuristic, self.transformation, self.score_func, self.params, self.label)
-

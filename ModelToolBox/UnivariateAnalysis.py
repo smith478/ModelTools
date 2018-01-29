@@ -1,26 +1,29 @@
-    
-def UnivariateAnalysis(p_features,
-                       p_X_train,
-                       p_Y_train,
-                       p_X_val,
-                       p_Y_val,
-                       p_top_k_features = 5,
-                       p_model = 'continuous', # choose from continuous, binary, multinomial
-                       p_target_distribution = 'gamma',
-                       p_metric = 'L1 Error', # choose from L1 Error, AUC
-                       p_seed = 0,
-                       p_subsamplesize = 1500,
-                       p_n_buckets = 20,
-                       p_verbose = False):
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+def univariate_analysis(p_features,
+                        p_X_train,
+                        p_Y_train,
+                        p_X_val,
+                        p_Y_val,
+                        p_top_k_features=5,
+                        p_model='continuous', # choose from continuous, binary, multinomial
+                        #p_target_distribution='gamma',  # Unused
+                        p_metric='L1 Error', # choose from L1 Error, AUC
+                        p_seed=0,
+                        p_subsamplesize=1500,
+                        p_n_buckets=20,
+                        p_verbose=False):
     feature_error = []
-    
+
     import sys
-    
-    #Import the library
+
+    # Import the library
     import statsmodels.api as sm
     from statsmodels.genmod.generalized_linear_model import GLMResults
-    
-    #Scoring parameter
+
+    # Scoring parameter
     if p_metric == 'L1 Error':
         from sklearn.metrics import mean_absolute_error
     elif p_metric == 'AUC':
@@ -29,43 +32,44 @@ def UnivariateAnalysis(p_features,
     else:
         print('{} is not currently an option'.format(p_metric))
         sys.exit()
-        
+
     for name, index in p_features:
         if p_verbose:
             print(name)
-        #Fit the model
-        if (len(index) == 1) or (p_model in ['binary','multinomial']): # add intercept to continuous variables and classification models
-            train_data = sm.add_constant(p_X_train.iloc[:,index])
-            val_data = sm.add_constant(p_X_val.iloc[:,index])
+        # Fit the model
+        # add intercept to continuous variables and classification models
+        if (len(index) == 1) or (p_model in ['binary', 'multinomial']):
+            train_data = sm.add_constant(p_X_train.iloc[:, index])
+            val_data = sm.add_constant(p_X_val.iloc[:, index])
         else:
-            train_data = p_X_train.iloc[:,index]
-            val_data = p_X_val.iloc[:,index]
-            
+            train_data = p_X_train.iloc[:, index]
+            val_data = p_X_val.iloc[:, index]
+
         if p_model == 'continuous':
             model = sm.GLM(p_Y_train, train_data, family=sm.families.Gamma(sm.families.links.log))
             try:
                 result = model.fit()
             except np.linalg.linalg.LinAlgError as err:
-                print('{} failed to fit due to {} error'.format(name,err))
+                print('{} failed to fit due to {} error'.format(name, err))
                 continue
         elif p_model == 'binary':
             model = sm.Logit(p_Y_train, train_data)
             try:
                 result = model.fit(disp=0)
             except np.linalg.linalg.LinAlgError as err:
-                print('{} failed to fit due to {} error'.format(name,err))
+                print('{} failed to fit due to {} error'.format(name, err))
                 continue
         elif p_model == 'multinomial':
             model = sm.MNLogit(p_Y_train, train_data)
             try:
                 result = model.fit(disp=0)
             except np.linalg.linalg.LinAlgError as err:
-                print('{} failed to fit due to {} error'.format(name,err))
+                print('{} failed to fit due to {} error'.format(name, err))
                 continue
         else:
             print('{} is not an available model option'.format(p_model))
-        
-        #Calculate the error with the selected metric
+
+        # Calculate the error with the selected metric
         if p_metric == 'L1 Error':
             error = mean_absolute_error(p_Y_val, result.predict(val_data))
         elif p_metric == 'AUC':
@@ -75,22 +79,22 @@ def UnivariateAnalysis(p_features,
                 print('{} AUC calculation failed'.format(name))
                 continue
             error = auc(fpr, tpr)
-        
+
         feature_error.append([name, error, index])
-    
+
     if p_metric in ['L1 Error']:
-        df = pd.DataFrame(columns = ['Variable','Validation Error','Index'],
-                      data = feature_error) 
+        df = pd.DataFrame(columns=['Variable', 'Validation Error', 'Index'],
+                          data=feature_error)
         df_sorted = df.sort_values(by='Validation Error')
     elif p_metric in ['AUC']:
-        df = pd.DataFrame(columns = ['Variable','Validation AUC','Index'],
-                      data = feature_error)  
-        df_sorted = df.sort_values(by='Validation AUC', ascending = False)
-    
-    top_k_features = df_sorted.iloc[:p_top_k_features,:]
-    
-    print(top_k_features.iloc[:,:2])
-    
+        df = pd.DataFrame(columns=['Variable', 'Validation AUC', 'Index'],
+                          data=feature_error)
+        df_sorted = df.sort_values(by='Validation AUC', ascending=False)
+
+    top_k_features = df_sorted.iloc[:p_top_k_features, :]
+
+    print(top_k_features.iloc[:, :2])
+
     for name, error, index in pd.DataFrame.as_matrix(top_k_features):
         if len(index) == 1:
             print('Feature: ' + str(name))
@@ -98,10 +102,10 @@ def UnivariateAnalysis(p_features,
                 print('Validation Error: ' + str(error))
             elif p_metric == 'AUC':
                 print('AUC: ' + str(error))
-                
-            X_train_const = sm.add_constant(p_X_train.iloc[:,index])
-            #X_val_const = sm.add_constant(p_X_val.iloc[:,index])
-            
+
+            X_train_const = sm.add_constant(p_X_train.iloc[:, index])
+            # X_val_const = sm.add_constant(p_X_val.iloc[:,index])
+
             if p_model == 'continuous':
                 model = sm.GLM(p_Y_train, X_train_const, family=sm.families.Gamma(sm.families.links.log))
             elif p_model == 'binary':
@@ -109,93 +113,95 @@ def UnivariateAnalysis(p_features,
             elif p_model == 'multinomial':
                 model = sm.MNLogit(p_Y_train, X_train_const)
             result = model.fit(disp=0)
-            
+
             print('Training AIC: ' + str(result.aic))
-            
+
             """ plot fitted vs observed on both training and validation data """
             y_pred_train = result.predict(X_train_const)
-            #y_pred_val = result.predict(X_val_const)
-            
-            plot_data_train = pd.DataFrame(np.column_stack([p_X_train.iloc[:,index],p_Y_train,y_pred_train]),columns=[list(p_X_train.columns[index])[0],'y','y_pred'])
-            
+            # y_pred_val = result.predict(X_val_const)
+
+            plot_data_train = pd.DataFrame(np.column_stack([p_X_train.iloc[:, index], p_Y_train, y_pred_train]),
+                                           columns=[list(p_X_train.columns[index])[0], 'y', 'y_pred'])
+
             if p_model == 'binary':
                 x_values, y_values = AutoBucket(plot_data_train[list(p_X_train.columns[index])[0]], plot_data_train['y'], p_n_buckets)
             else:
                 from random import sample, seed
                 seed(p_seed)
-                rand_vals = sample(range(len(plot_data_train)), k=min(p_subsamplesize,len(plot_data_train)))
-                plot_data_train_sample = plot_data_train.iloc[rand_vals,:]
+                rand_vals = sample(range(len(plot_data_train)), k=min(p_subsamplesize, len(plot_data_train)))
+                plot_data_train_sample = plot_data_train.iloc[rand_vals, :]
                 plot_data_train_sample_sorted = plot_data_train_sample.sort_values(by=list(p_X_train.columns[index])[0])
-            
+
             fig, ax = plt.subplots(figsize=(12, 8))
-            
+
             if p_model == 'binary':
                 plot_data_train_sample_sorted = plot_data_train.sort_values(by=list(p_X_train.columns[index])[0])
-                plot_data_train_sample_sorted.plot(x=list(p_X_train.columns[index])[0],y='y_pred',ax=ax,linestyle='-',color='b')
+                plot_data_train_sample_sorted.plot(x=list(p_X_train.columns[index])[0], y='y_pred', ax=ax, linestyle='-', color='b')
                 plt.plot(x_values, y_values, 'ro--')
             else:
-                plot_data_train_sample_sorted.plot(x=list(p_X_train.columns[index])[0],y='y_pred',ax=ax,linestyle='-',color='b')
-                plot_data_train_sample_sorted.plot(x=list(p_X_train.columns[index])[0],y='y',ax=ax,kind='scatter',color='r')
+                plot_data_train_sample_sorted.plot(x=list(p_X_train.columns[index])[0], y='y_pred', ax=ax, linestyle='-', color='b')
+                plot_data_train_sample_sorted.plot(x=list(p_X_train.columns[index])[0], y='y', ax=ax, kind='scatter', color='r')
             plt.show()
-            
+
             print(result.summary())
         else:
-            """ Add observed (average) values to the graph. Use automatic bucketing of indt variable """
-            """ Add argument to choose between: predicted value, observed value, 95% confidence int """
+            # Add observed (average) values to the graph. Use automatic bucketing of indt variable
+            # Add argument to choose between: predicted value, observed value, 95% confidence int
             print('Feature: ' + str(name))
             if p_metric in ['L1 Error']:
                 print('Validation Error: ' + str(error))
             elif p_metric == 'AUC':
                 print('AUC: ' + str(error))
-             
+
             if p_model == 'continuous':
-                model = sm.GLM(p_Y_train, p_X_train.iloc[:,index], family=sm.families.Gamma(sm.families.links.log))
+                model = sm.GLM(p_Y_train, p_X_train.iloc[:, index], family=sm.families.Gamma(sm.families.links.log))
             elif p_model == 'binary':
-                model = sm.Logit(p_Y_train, p_X_train.iloc[:,index])
+                model = sm.Logit(p_Y_train, p_X_train.iloc[:, index])
             elif p_model == 'multinomial':
-                model = sm.MNLogit(p_Y_train, p_X_train.iloc[:,index])
+                model = sm.MNLogit(p_Y_train, p_X_train.iloc[:, index])
             result = model.fit(disp=0)
-            
+
             print('Training AIC: ' + str(result.aic))
-            
+
             # TODO add multinomial below
             fig, ax1 = plt.subplots(figsize=(12, 8))
             if p_model == 'continuous':
-                upper_bound = pd.DataFrame({'Level': p_X_train.iloc[:,index].columns,
-                                            '95% C.I.': list(np.exp(GLMResults.conf_int(result)[:,1]))}) 
-                model = pd.DataFrame({'Level': p_X_train.iloc[:,index].columns,
-                                      'model': list(np.exp(result.params))}) 
-                lower_bound = pd.DataFrame({'Level': p_X_train.iloc[:,index].columns,
-                                            '95% C.I.': list(np.exp(GLMResults.conf_int(result)[:,0]))})
+                upper_bound = pd.DataFrame({'Level': p_X_train.iloc[:, index].columns,
+                                            '95% C.I.': list(np.exp(GLMResults.conf_int(result)[:, 1]))})
+                model = pd.DataFrame({'Level': p_X_train.iloc[:, index].columns,
+                                      'model': list(np.exp(result.params))})
+                lower_bound = pd.DataFrame({'Level': p_X_train.iloc[:, index].columns,
+                                            '95% C.I.': list(np.exp(GLMResults.conf_int(result)[:, 0]))})
             elif p_model == 'binary':
                 # TODO verify transformation below is correct
-                upper_bound = pd.DataFrame({'Level': p_X_train.iloc[:,index].columns,
-                                            '95% C.I.': list(np.exp(GLMResults.conf_int(result)[:,1])/(np.exp(GLMResults.conf_int(result)[:,1])+1))}) 
-                model = pd.DataFrame({'Level': p_X_train.iloc[:,index].columns,
-                                      'model': list(np.exp(result.params)/(1+np.exp(result.params)))}) 
-                lower_bound = pd.DataFrame({'Level': p_X_train.iloc[:,index].columns,
-                                            '95% C.I.': list(np.exp(GLMResults.conf_int(result)[:,0])/(np.exp(GLMResults.conf_int(result)[:,0])+1))})
-            upper_bound.plot(x='Level',ax=ax1,linestyle='-', marker='o',color='r')
-            model.plot(x='Level',ax=ax1,linestyle='-', marker='o',color='b')
-            lower_bound.plot(x='Level',ax=ax1,linestyle='-', marker='o',color='g')
+                upper_bound = pd.DataFrame({'Level': p_X_train.iloc[:, index].columns,
+                                            '95% C.I.': list(np.exp(GLMResults.conf_int(result)[:, 1])/
+                                                             (np.exp(GLMResults.conf_int(result)[:, 1])+1))})
+                model = pd.DataFrame({'Level': p_X_train.iloc[:, index].columns,
+                                      'model': list(np.exp(result.params)/(1+np.exp(result.params)))})
+                lower_bound = pd.DataFrame({'Level': p_X_train.iloc[:, index].columns,
+                                            '95% C.I.': list(np.exp(GLMResults.conf_int(result)[:, 0])/
+                                                             (np.exp(GLMResults.conf_int(result)[:, 0])+1))})
+            upper_bound.plot(x='Level', ax=ax1, linestyle='-', marker='o', color='r')
+            model.plot(x='Level', ax=ax1, linestyle='-', marker='o', color='b')
+            lower_bound.plot(x='Level', ax=ax1, linestyle='-', marker='o', color='g')
             ax1.set_ylabel('Response', color='b')
             ax1.tick_params('y', colors='b')
             ax1.legend(loc='upper left')
-            
-            weights = pd.DataFrame({'Level': p_X_train.iloc[:,index].columns,
-                                    'weight': list(p_X_train.iloc[:,index].sum(axis=0))})
+
+            weights = pd.DataFrame({'Level': p_X_train.iloc[:, index].columns,
+                                    'weight': list(p_X_train.iloc[:, index].sum(axis=0))})
             plt.xticks(rotation=90)
-            
+
             ax2 = ax1.twinx()
-            weights.plot(x='Level',ax=ax2,kind='bar',color='y',alpha=0.4)
+            weights.plot(x='Level', ax=ax2, kind='bar', color='y', alpha=0.4)
             ax2.set_ylabel('Weight', color='y')
-            ax2.set_ylim([0,max(weights.iloc[:,1])*3])
+            ax2.set_ylim([0, max(weights.iloc[:, 1]) * 3])
             ax2.tick_params('y', colors='y')
             ax2.legend(loc='upper right')
             ax2.grid(False)
-            
-            #fig.tight_layout()
+
+            # fig.tight_layout()
             plt.show()
-            
+
             print(result.summary())
-            

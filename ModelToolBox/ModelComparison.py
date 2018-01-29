@@ -6,16 +6,16 @@ import sys
 sys.path.append("..")  # Find a better way to do this.
 from Models.skModels import *
 
-def ModelComparisonRegression(p_models_to_comp,
-                              p_X_train,
-                              p_X_val,
-                              p_Y_train,
-                              p_Y_val,
-                              p_predictors,
-                              p_metric = 'AUC', # Options are AUC, R2, accuracy
-                              p_models = ['All'],
-                              p_seed = 0,
-                              p_verbose = False):
+def model_comparison_regression(p_models_to_comp,
+                                p_X_train,
+                                p_X_val,
+                                p_Y_train,
+                                p_Y_val,
+                                p_predictors,
+                                #p_metric='AUC', # Options are AUC, R2, accuracy  # Unused
+                                #p_models=['All'],  # Unused
+                                p_seed=0,
+                                p_verbose=False):
     """ Add another argument to allow transformations of the target variable (default to identity) e.g. see transform in SVM, Bagging """
     """ Add another action if p_verbose = True where run-time of each model is calculated (this will help with optimizing hyper-parameter tuning) """
     # List of models tested
@@ -28,16 +28,16 @@ def ModelComparisonRegression(p_models_to_comp,
         if hyper_parameters: # If there are hyperparameters to test do it here
             for param in hyper_parameters[0]:
                 model_with_hyperparameters = model_object
-                model_with_hyperparameters.fit(p_X_train.iloc[:,p_predictors], p_Y_train, param)
-                result = model_with_hyperparameters.score(p_X_val.iloc[:,p_predictors], p_Y_val)
+                model_with_hyperparameters.fit(p_X_train.iloc[:, p_predictors], p_Y_train, param)
+                result = model_with_hyperparameters.score(p_X_val.iloc[:, p_predictors], p_Y_val)
                 results.append(result)
                 if p_verbose:
                     print('{} {} - {}'.format(model_with_hyperparameters.label, param, result))
                 models.append(['{} {}'.format(model_with_hyperparameters.label, param), result])
         else:
             model = model_object
-            model.fit(p_X_train.iloc[:,p_predictors], p_Y_train, None)
-            result = model.score(p_X_val.iloc[:,p_predictors], p_Y_val)
+            model.fit(p_X_train.iloc[:, p_predictors], p_Y_train, None)
+            result = model.score(p_X_val.iloc[:, p_predictors], p_Y_val)
             results.append(result)
             if p_verbose:
                 print('{} XX - {}'.format(model.label, result))
@@ -48,25 +48,25 @@ def ModelComparisonRegression(p_models_to_comp,
     plt.plot(results)
     # Label the axis with model names
     ax.set_xticks(range(len(models)))
-    ax.set_xticklabels([label[0] for label in models],rotation='vertical')
+    ax.set_xticklabels([label[0] for label in models], rotation='vertical')
     # Plot the accuracy for all combinations
     plt.show()
 
-    df = pd.DataFrame(columns = ['Model','Score'], data=models)
+    df = pd.DataFrame(columns=['Model', 'Score'], data=models)
     df_sorted = df.sort_values(by='Score', ascending=True)
     print(df_sorted)
 
 
-def ModelComparisonClassification(p_models_to_comp,
-                                  p_X_train,
-                                  p_X_val,
-                                  p_Y_train,
-                                  p_Y_val,
-                                  p_predictors,
-                                  p_metric = 'L1', # Options: L1, L2, R2
-                                  p_models = ['All'],
-                                  p_seed = 0,
-                                  p_verbose = False):
+def model_comparison_classification(p_models_to_comp,
+                                    p_X_train,
+                                    p_X_val,
+                                    p_Y_train,
+                                    p_Y_val,
+                                    p_predictors,
+                                    #p_metric='L1', # Options: L1, L2, R2  # Unused
+                                    #p_models=['All'],  # Unused
+                                    p_seed=0,
+                                    p_verbose=False):
     """ Add another argument to allow transformations of the target variable (default to identity) e.g. see transform in SVM, Bagging """
     """ Add another action if p_verbose = True where run-time of each model is calculated (this will help with optimizing hyper-parameter tuning) """
     # List of models tested
@@ -83,8 +83,8 @@ def ModelComparisonClassification(p_models_to_comp,
             for param in hyper_parameters[0]:
                 model_with_hyperparameters = model_object
                 model_with_hyperparameters.score_func = p_metric
-                model_with_hyperparameters.fit(p_X_train.iloc[:,p_predictors], p_Y_train, param)
-                result = model_with_hyperparameters.score(p_X_val.iloc[:,p_predictors], p_Y_val)
+                model_with_hyperparameters.fit(p_X_train.iloc[:, p_predictors], p_Y_train, param)
+                result = model_with_hyperparameters.score(p_X_val.iloc[:, p_predictors], p_Y_val)
                 results.append(result)
                 if p_verbose:
                     print('{} {} - {}'.format(model_with_hyperparameters.label, param, result))
@@ -92,8 +92,8 @@ def ModelComparisonClassification(p_models_to_comp,
         else:
             model_with_hyperparameters = model_object
             model_with_hyperparameters.score_func = p_metric
-            model.fit(p_X_train.iloc[:,p_predictors], p_Y_train, None)
-            result = model.score(p_X_val.iloc[:,p_predictors], p_Y_val)
+            model.fit(p_X_train.iloc[:, p_predictors], p_Y_train, None)
+            result = model.score(p_X_val.iloc[:, p_predictors], p_Y_val)
             results.append(result)
             if p_verbose:
                 print('{} XX - {}'.format(model.label, result))
@@ -104,24 +104,24 @@ def ModelComparisonClassification(p_models_to_comp,
     plt.plot(results)
     # Label the axis with model names
     ax.set_xticks(range(len(models)))
-    ax.set_xticklabels([label[0] for label in models],rotation='vertical')
+    ax.set_xticklabels([label[0] for label in models], rotation='vertical')
     # Plot the accuracy for all combinations
     plt.show()
 
-    df = pd.DataFrame(columns = ['Model','Validation Fit'], data=models)
+    df = pd.DataFrame(columns=['Model', 'Validation Fit'], data=models)
     df_sorted = df.sort_values(by='Validation Fit', ascending=False)
     print(df_sorted)
 
 
-def ModelComparisonRegression_StdSet(p_X_train,
-                                     p_X_val,
-                                     p_Y_train,
-                                     p_Y_val,
-                                     p_predictors,
-                                     p_metric = 'L1', # Options: L1, L2, R2
-                                     p_models = ['All'],
-                                     p_seed = 0,
-                                     p_verbose = False):
+def model_comparison_regression_stdset(p_X_train,
+                                       p_X_val,
+                                       p_Y_train,
+                                       p_Y_val,
+                                       p_predictors,
+                                       p_metric='L1', # Options: L1, L2, R2
+                                       p_models=['All'],
+                                       p_seed=0,
+                                       p_verbose=False):
     # List of models to be run. Formatted: [model name, package name, module name, hyper-parameters (optional)]
     models_to_test = []
     if 'LinearRegression' in p_models or 'All' in p_models:
@@ -129,50 +129,50 @@ def ModelComparisonRegression_StdSet(p_X_train,
     if 'RidgeRegression' in p_models or 'All' in p_models:
         models_to_test.append(['Ridge Regression', 'sklearn.linear_model', 'Ridge', [np.array([1.0])]])
     if 'LassoRegression' in p_models or 'All' in p_models:
-        models_to_test.append(['Lasso Regression', 'sklearn.linear_model', 'Lasso',[np.array([0.001])]])
+        models_to_test.append(['Lasso Regression', 'sklearn.linear_model', 'Lasso', [np.array([0.001])]])
     if 'ElasticNetRegression' in p_models or 'All' in p_models:
-        models_to_test.append(['Elastic Net Regression', 'sklearn.linear_model', 'ElasticNet',[np.array([0.001])]])
+        models_to_test.append(['Elastic Net Regression', 'sklearn.linear_model', 'ElasticNet', [np.array([0.001])]])
     if 'KNearestNeighbors' in p_models or 'All' in p_models:
-        models_to_test.append(['KNN', 'sklearn.neighbors', 'KNeighborsRegressor',[np.array([1])]])
+        models_to_test.append(['KNN', 'sklearn.neighbors', 'KNeighborsRegressor', [np.array([1])]])
     if 'CART' in p_models or 'All' in p_models:
-        models_to_test.append(['CART', 'sklearn.tree', 'DecisionTreeRegressor',[np.array([5])]])
+        models_to_test.append(['CART', 'sklearn.tree', 'DecisionTreeRegressor', [np.array([5])]])
     if 'RandomForest' in p_models or 'All' in p_models:
-        models_to_test.append(['Random Forest', 'sklearn.ensemble', 'RandomForestRegressor',[np.array([50])]])
+        models_to_test.append(['Random Forest', 'sklearn.ensemble', 'RandomForestRegressor', [np.array([50])]])
     if 'ExtraTrees' in p_models or 'All' in p_models:
-        models_to_test.append(['Extra Trees', 'sklearn.ensemble', 'ExtraTreesRegressor',[np.array([50])]])
+        models_to_test.append(['Extra Trees', 'sklearn.ensemble', 'ExtraTreesRegressor', [np.array([50])]])
     if 'AdaBoost' in p_models or 'All' in p_models:
-        models_to_test.append(['Ada Boost', 'sklearn.ensemble', 'AdaBoostRegressor',[np.array([100])]])
+        models_to_test.append(['Ada Boost', 'sklearn.ensemble', 'AdaBoostRegressor', [np.array([100])]])
     if 'SGBoosting' in p_models or 'All' in p_models:
-        models_to_test.append(['SG Boost', 'sklearn.ensemble', 'GradientBoostingRegressor',[np.array([100])]])
+        models_to_test.append(['SG Boost', 'sklearn.ensemble', 'GradientBoostingRegressor', [np.array([100])]])
     if 'XGBoost' in p_models or 'All' in p_models:
-        models_to_test.append(['XG Boost', 'xgboost', 'XGBRegressor',[np.array([1000])]])
+        models_to_test.append(['XG Boost', 'xgboost', 'XGBRegressor', [np.array([1000])]])
 
     models_to_comp = list()
 
     for model_label, module_name, model_name, hyper_parameters in models_to_test:
         models_to_comp.append([sklearn_Model(model_label, module_name, model_name, p_metric, p_seed=p_seed), model_name, hyper_parameters])
 
-    ModelComparisonRegression(models_to_comp,
-                              p_X_train,
-                              p_X_val,
-                              p_Y_train,
-                              p_Y_val,
-                              p_predictors,
-                              p_metric = 'L1', # Options: L1, L2, R2
-                              p_models = ['All'],
-                              p_seed = 0,
-                              p_verbose = False)
+    model_comparison_regression(models_to_comp,
+                                p_X_train,
+                                p_X_val,
+                                p_Y_train,
+                                p_Y_val,
+                                p_predictors,
+                                p_metric='L1', # Options: L1, L2, R2
+                                p_models=['All'],
+                                p_seed=0,
+                                p_verbose=False)
 
 
-def ModelComparisonClassification_StdSet(p_X_train,
-                                         p_X_val,
-                                         p_Y_train,
-                                         p_Y_val,
-                                         p_predictors,
-                                         p_metric = 'L1', # Options: L1, L2, R2
-                                         p_models = ['All'],
-                                         p_seed = 0,
-                                         p_verbose = False):
+def model_comparison_classification_stdset(p_X_train,
+                                           p_X_val,
+                                           p_Y_train,
+                                           p_Y_val,
+                                           p_predictors,
+                                           p_metric='L1', # Options: L1, L2, R2
+                                           p_models=['All'],
+                                           p_seed=0,
+                                           p_verbose=False):
     # Populate list of models to be run. Formatted: [model name, package name, module name, hyper-parameters (optional)]
     models_to_test = []
     if 'LogisticRegression' in p_models or 'All' in p_models:
@@ -209,14 +209,14 @@ def ModelComparisonClassification_StdSet(p_X_train,
     for model_label, module_name, model_name, hyper_parameters in models_to_test:
         models_to_comp.append([sklearn_Model(model_label, module_name, model_name, p_metric, p_seed=p_seed), model_name, hyper_parameters])
 
-    ModelComparisonClassification(models_to_comp,
-                                  p_X_train,
-                                  p_X_val,
-                                  p_Y_train,
-                                  p_Y_val,
-                                  p_predictors,
-                                  p_metric = 'L1', # Options: L1, L2, R2
-                                  p_models = ['All'],
-                                  p_seed = 0,
-                                  p_verbose = False)
+    model_comparison_classification(models_to_comp,
+                                    p_X_train,
+                                    p_X_val,
+                                    p_Y_train,
+                                    p_Y_val,
+                                    p_predictors,
+                                    p_metric='L1', # Options: L1, L2, R2
+                                    p_models=['All'],
+                                    p_seed=0,
+                                    p_verbose=False)
 

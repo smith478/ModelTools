@@ -29,7 +29,7 @@ def univariate_permutations(p_model,
         for i, (feature_name, index) in enumerate(p_features): # shuffle the ith predictor variable (to break any relationship with the target)
             X_t = Xt_test.copy() # copy the test data, so as not to disturb
             random.seed(p_seed) # set seed for reproducibility
-            X_t.iloc[:, index] = random.permutation(X_t.iloc[:, index]) # Permute the observations from the ith variable
+            X_t.iloc[:, index] = np.random.permutation(X_t.iloc[:, index]) # Permute the observations from the ith variable
             shuff_score = p_model.score(X_t, Yt_test)
             scores.append([feature_name, index, (shuff_score - score) / shuff_score])
             if p_verbose:

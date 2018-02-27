@@ -76,13 +76,9 @@ def model_comparison_classification(p_models_to_comp,
     results = []
 
     for model_object, model_name, hyper_parameters in p_models_to_comp:
-        # Import the model
-        module = importlib.import_module(module_name)
-
         if hyper_parameters: # If there are hyperparameters to test do it here
             for param in hyper_parameters[0]:
                 model_with_hyperparameters = model_object
-                model_with_hyperparameters.score_func = p_metric
                 model_with_hyperparameters.fit(p_X_train.iloc[:, p_predictors], p_Y_train, param)
                 result = model_with_hyperparameters.score(p_X_val.iloc[:, p_predictors], p_Y_val)
                 results.append(result)
@@ -90,8 +86,7 @@ def model_comparison_classification(p_models_to_comp,
                     print('{} {} - {}'.format(model_with_hyperparameters.label, param, result))
                 models.append(['{} {}'.format(model_with_hyperparameters.label, param), result])
         else:
-            model_with_hyperparameters = model_object
-            model_with_hyperparameters.score_func = p_metric
+            model = model_object
             model.fit(p_X_train.iloc[:, p_predictors], p_Y_train, None)
             result = model.score(p_X_val.iloc[:, p_predictors], p_Y_val)
             results.append(result)
@@ -158,8 +153,6 @@ def model_comparison_regression_stdset(p_X_train,
                                 p_Y_train,
                                 p_Y_val,
                                 p_predictors,
-                                p_metric='L1', # Options: L1, L2, R2
-                                p_models=['All'],
                                 p_seed=0,
                                 p_verbose=False)
 
@@ -215,8 +208,6 @@ def model_comparison_classification_stdset(p_X_train,
                                     p_Y_train,
                                     p_Y_val,
                                     p_predictors,
-                                    p_metric='L1', # Options: L1, L2, R2
-                                    p_models=['All'],
                                     p_seed=0,
                                     p_verbose=False)
 

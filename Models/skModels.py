@@ -57,7 +57,7 @@ def sklearn_Model(model_label, module_name, model_name, p_metric, p_seed=0):
                 this_model.fit(X, Y)
                 return this_model
             return my_fit_function
-    elif model_name in ['DecisionTreeRegressor', 'DecisionTreeClassifier', 'RandomForestClassifier', 'ExtraTreesClassifier', 'AdaBoostClassifier', 'GradientBoostingClassifier']:
+    elif model_name in ['DecisionTreeRegressor', 'DecisionTreeClassifier', 'RandomForestClassifier', 'ExtraTreesClassifier', 'GradientBoostingClassifier']:
         def my_heuristic(p_hyperparams, p_scoring):
             def my_fit_function(X, Y):
                 this_model = getattr(module, model_name)(max_depth=p_hyperparams, random_state=p_seed)
@@ -81,7 +81,7 @@ def sklearn_Model(model_label, module_name, model_name, p_metric, p_seed=0):
     elif model_name in ['BernoulliNB']:
         def my_heuristic(p_hyperparams, p_scoring):
             def my_fit_function(X, Y):
-                this_model = getattr(module, model_name)(alpha=p_hyperparams, seed=p_seed)
+                this_model = getattr(module, model_name)(alpha=p_hyperparams)
                 this_model.fit(X, Y)
                 return this_model
             return my_fit_function

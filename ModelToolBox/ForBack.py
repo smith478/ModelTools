@@ -99,7 +99,7 @@ def for_back_permutations(p_model,
             for j, (feature_name, index) in enumerate(best_vars): # shuffle the ith predictor variable (to break any relationship with the target)
                 X_t = p_X_train.iloc[test_index, :].copy() # copy the test data, so as not to disturb
                 random.seed(p_seed) # set seed for reproducibility
-                X_t.iloc[:, index] = random.permutation(X_t.iloc[:, index]) # Permute the observations from the ith variable
+                X_t.iloc[:, index] = np.random.permutation(X_t.iloc[:, index]) # Permute the observations from the ith variable
                 X_t = X_t.iloc[:, best_pred_index] # Filter down to the remaining variables
                 shuff_score = p_model.score(X_t, Yt_test)
                 scores.append([feature_name, index, (shuff_score - score) / shuff_score])
@@ -157,7 +157,7 @@ def for_back_permutations(p_model,
                     X_t = p_X_train.iloc[test_index, :].copy() # copy the test data, so as not to disturb
                     shuffle_index = list(set(leftover_index) - set(index))
                     random.seed(p_seed) # set seed for reproducibility
-                    X_t.iloc[:, shuffle_index] = random.permutation(X_t.iloc[:, shuffle_index]) # Permute the observations from the ith variable
+                    X_t.iloc[:, shuffle_index] = np.random.permutation(X_t.iloc[:, shuffle_index]) # Permute the observations from the ith variable
 
                     p_model.params = full_params
                     shuff_score = p_model.score(X_t, Yt_test)
